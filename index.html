@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Uregelrette verb</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>Uregelrette verb</h1>
+    <!-- Progress indicator will be updated via JavaScript -->
+    <p id="progress" class="progress">0/0</p>
+  </header>
+  <main>
+    <!-- Card displaying the verb and forms -->
+    <div class="card">
+      <h2 id="infinitive" class="verb"></h2>
+      <div id="forms" class="forms hidden">
+        <p><strong>Presens:</strong> <span id="present"></span></p>
+        <p><strong>Preteritum:</strong> <span id="preterite"></span></p>
+        <p><strong>Presens perfektum:</strong> <span id="perfect"></span></p>
+        <p><strong>Engelsk:</strong> <span id="english"></span></p>
+      </div>
+      <div id="hintSection" class="hint hidden">
+        <p><strong>Minne‑triks:</strong> <span id="hint"></span></p>
+      </div>
+    </div>
+    <!-- Action buttons -->
+    <div class="buttons">
+      <button id="showButton">Vis svar</button>
+      <button id="knowButton">Jeg husket det</button>
+      <button id="skipButton">Hopp over</button>
+    </div>
+    <!-- Summary shown when all verbs have been reviewed -->
+    <div id="summary" class="summary hidden">
+      <h2>Ferdig!</h2>
+      <p>Du har gått gjennom alle verbene.</p>
+      <p>Du husket <span id="learnedCount"></span> av <span id="totalCount"></span> verb.</p>
+      <button id="restartButton">Start på nytt</button>
+    </div>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>
