@@ -777,6 +777,27 @@ const positiveMessages = [
 const infoButton   = document.getElementById('infoButton');
 const infoModal    = document.getElementById('infoModal');
 const closeModalEl = document.getElementById('closeModal');
+const modalCloseButton = document.getElementById('modalCloseButton');
+
+// Elements for quiz mode
+const quizButton      = document.getElementById('quizButton');
+const quizContainer   = document.getElementById('quizContainer');
+const quizScoreboard  = document.getElementById('quizScoreboard');
+const quizQuestionEl  = document.getElementById('quizQuestion');
+const quizOptionsEl   = document.getElementById('quizOptions');
+const quizFeedbackEl  = document.getElementById('quizFeedback');
+const quizExitButton  = document.getElementById('quizExitButton');
+
+// Main card and buttons container for study mode
+const cardEl           = document.getElementById('card');
+const buttonsContainer = document.querySelector('.buttons');
+
+// Quiz state variables
+let isQuizMode  = false;
+let quizOrder   = [];
+let quizIndex   = 0;
+let quizCorrect = 0;
+let quizTotal   = 0;
 
 /**
  * Open the information modal.
@@ -981,6 +1002,166 @@ function filterVerbs(level) {
   showNext();
 }
 
+/**
+ * Update the quiz scoreboard text.
+ */
+function updateQuizScoreboard() {
+  if (!quizScoreboard) return;
+  quizScoreboard.textContent = `Quiz: ${quizIndex}/${quizTotal} – Correct: ${quizCorrect} (Riktig: ${quizCorrect})`;
+}
+
+/**
+ * Start the quiz mode. Initializes quiz order and counters, hides study UI and shows quiz UI.
+ */
+function startQuiz() {
+  isQuizMode = true;
+  // Determine how many questions to ask: use up to 10 or total verbs if fewer
+  quizTotal = Math.min(10, allVerbs.length);
+  // Create a shuffled order of indices for quiz
+  quizOrder = shuffle([...Array(allVerbs.length).keys()]).slice(0, quizTotal);
+  quizIndex = 0;
+  quizCorrect = 0;
+  // Hide study mode elements
+  if (cardEl) cardEl.style.display = 'none';
+  if (buttonsContainer) buttonsContainer.style.display = 'none';
+  summaryEl.classList.add('hidden');
+  // Show quiz container
+  if (quizContainer) quizContainer.classList.remove('hidden');
+  updateQuizScoreboard();
+  showQuizQuestion();
+}
+
+/**
+ * Display the current quiz question and multiple choice options.
+ */
+function showQuizQuestion() {
+  updateQuizScoreboard();
+  if (quizIndex >= quizOrder.length) {
+    endQuiz();
+    return;
+  }
+  // Hide feedback until an answer is selected
+  if (quizFeedbackEl) {
+    quizFeedbackEl.classList.remove('show');
+    quizFeedbackEl.style.display = 'none';
+  }
+  // Clear previous options
+  if (quizOptionsEl) {
+    quizOptionsEl.innerHTML = '';
+  }
+  const vIndex = quizOrder[quizIndex];
+  const v = allVerbs[vIndex];
+  if (!v) {
+    quizIndex++;
+    showQuizQuestion();
+    return;
+  }
+  // Show the infinitive as the question prompt
+  if (quizQuestionEl) {
+    quizQuestionEl.textContent = v.infinitive;
+  }
+  // Determine correct and distractor answers. Use first variant of preterite as the canonical answer.
+  const forms = v.preterite.split(/[,()]/).map(s => s.trim()).filter(s => s.length > 0);
+  const correct = forms[0];
+  // Generate distractors from other verbs' preterite forms
+  const distractors = [];
+  while (distractors.length < 3) {
+    const r = Math.floor(Math.random() * allVerbs.length);
+    const candidate = allVerbs[r].preterite.split(/[,()]/)[0].trim();
+    if (candidate && candidate !== correct && !distractors.includes(candidate)) {
+      distractors.push(candidate);
+    }
+  }
+  const options = shuffle([correct, ...distractors]);
+  // Render option buttons
+  options.forEach(option => {
+    const btn = document.createElement('button');
+    btn.textContent = option;
+    btn.addEventListener('click', () => handleQuizAnswer(btn, option, correct, v));
+    quizOptionsEl.appendChild(btn);
+  });
+}
+
+/**
+ * Handle the user's answer in quiz mode, provide feedback, and proceed to the next question.
+ * @param {HTMLButtonElement} btn The button clicked
+ * @param {string} selected The selected answer
+ * @param {string} correct The correct answer
+ * @param {Object} v The current verb object
+ */
+function handleQuizAnswer(btn, selected, correct, v) {
+  // Disable all options to prevent multiple selections
+  const buttons = quizOptionsEl.querySelectorAll('button');
+  buttons.forEach(button => {
+    button.disabled = true;
+  });
+  // Check if selected answer matches any of the correct forms
+  const allCorrectForms = v.preterite.split(/[,()]/).map(s => s.trim());
+  const isCorrect = allCorrectForms.includes(selected);
+  if (isCorrect) {
+    btn.classList.add('correct');
+    quizCorrect++;
+    showToast();
+  } else {
+    btn.classList.add('wrong');
+    // Highlight the correct button
+    buttons.forEach(b => {
+      if (allCorrectForms.includes(b.textContent)) {
+        b.classList.add('correct');
+      }
+    });
+  }
+  // Show feedback with both languages
+  const englishHint = translateHint(v.hint || '');
+  if (quizFeedbackEl) {
+    quizFeedbackEl.innerHTML = `<strong>${v.infinitive}</strong>: ${v.preterite} – ${v.english}<br>${v.hint || ''}<br><em>${englishHint}</em>`;
+    quizFeedbackEl.classList.add('show');
+    quizFeedbackEl.style.display = 'block';
+  }
+  // Advance to next question after delay
+  setTimeout(() => {
+    quizIndex++;
+    showQuizQuestion();
+  }, 1800);
+}
+
+/**
+ * Display the quiz results at the end.
+ */
+function endQuiz() {
+  updateQuizScoreboard();
+  if (quizQuestionEl) {
+    quizQuestionEl.textContent = 'Quiz finished! (Quiz ferdig!)';
+  }
+  if (quizOptionsEl) {
+    quizOptionsEl.innerHTML = '';
+  }
+  if (quizFeedbackEl) {
+    quizFeedbackEl.innerHTML = `You answered ${quizCorrect} of ${quizTotal} correctly. (Du svarte riktig på ${quizCorrect} av ${quizTotal}.)`;
+    quizFeedbackEl.classList.add('show');
+    quizFeedbackEl.style.display = 'block';
+  }
+}
+
+/**
+ * Exit quiz mode and return to study mode.
+ */
+function exitQuiz() {
+  isQuizMode = false;
+  // Hide quiz container
+  if (quizContainer) quizContainer.classList.add('hidden');
+  // Show study mode elements
+  if (cardEl) cardEl.style.display = '';
+  if (buttonsContainer) buttonsContainer.style.display = 'flex';
+  // Reset any feedback
+  if (quizFeedbackEl) {
+    quizFeedbackEl.classList.remove('show');
+    quizFeedbackEl.style.display = 'none';
+  }
+  // Continue normal study
+  showNext();
+}
+
 // Event listeners
 flipButton.addEventListener('click', flipCard);
 knowButton.addEventListener('click', markLearned);
@@ -989,14 +1170,18 @@ restartButton.addEventListener('click', restart);
 
 // Info button opens modal, close button closes
 if (infoButton) {
-  infoButton.addEventListener('click', (ev) => {
-    ev.preventDefault();
+  infoButton.addEventListener('click', () => {
     openModal();
   });
 }
 if (closeModalEl) {
-  closeModalEl.addEventListener('click', (ev) => {
-    ev.preventDefault();
+  closeModalEl.addEventListener('click', () => {
+    closeModal();
+  });
+}
+// Additional button inside modal to close it
+if (modalCloseButton) {
+  modalCloseButton.addEventListener('click', () => {
     closeModal();
   });
 }
@@ -1006,6 +1191,18 @@ if (infoModal) {
     if (event.target === infoModal) {
       closeModal();
     }
+  });
+}
+
+// Quiz mode event listeners
+if (quizButton) {
+  quizButton.addEventListener('click', () => {
+    startQuiz();
+  });
+}
+if (quizExitButton) {
+  quizExitButton.addEventListener('click', () => {
+    exitQuiz();
   });
 }
 

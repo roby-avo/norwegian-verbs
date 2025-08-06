@@ -354,3 +354,129 @@ main {
 .close:hover {
   color: #4b8af7;
 }
+
+/* Ensure hidden modal is not displayed by overriding .modal display */
+.modal.hidden {
+  display: none !important;
+}
+
+/* Quiz mode styles */
+.quiz-container {
+  width: 100%;
+  max-width: 480px;
+  margin: 1rem auto;
+  padding: 1rem;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+}
+.quiz-scoreboard {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.8rem;
+  text-align: center;
+}
+.quiz-question {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.8rem;
+  text-align: center;
+}
+.quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+.quiz-options button {
+  padding: 0.6rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  background-color: #f0f5ff;
+  color: #2c3e50;
+}
+.quiz-options button:hover {
+  background-color: #e6edff;
+}
+.quiz-options button.correct {
+  background-color: #28a745;
+  color: white;
+}
+.quiz-options button.wrong {
+  background-color: #dc3545;
+  color: white;
+}
+.quiz-feedback {
+  margin-top: 0.6rem;
+  font-size: 0.95rem;
+  text-align: left;
+  width: 100%;
+  background-color: #f7faff;
+  border-left: 4px solid #4b8af7;
+  padding: 0.5rem;
+  border-radius: 4px;
+  display: none;
+}
+.quiz-feedback.show {
+  display: block;
+}
+.quiz-exit-btn {
+  margin-top: 1rem;
+  padding: 0.6rem 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  background-color: #4b8af7;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.quiz-exit-btn:hover {
+  background-color: #3a78d6;
+}
+
+/* Ensure hidden quiz container is not displayed */
+.quiz-container.hidden {
+  display: none !important;
+}
+
+/* Quiz button styling */
+.quiz-btn {
+  background-color: #ff6f61;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.quiz-btn:hover {
+  background-color: #e65f52;
+}
+
+/* Button inside modal to close */
+.modal-close-btn {
+  margin-top: 1rem;
+  padding: 0.6rem 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  background-color: #4b8af7;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.modal-close-btn:hover {
+  background-color: #3a78d6;
+}

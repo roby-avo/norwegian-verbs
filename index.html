@@ -29,6 +29,8 @@
       </select>
       <!-- Info button to open explanation modal -->
       <button id="infoButton" class="info-btn">Info (Om)</button>
+      <!-- Quiz mode button -->
+      <button id="quizButton" class="quiz-btn">Quiz (Quiz‑modus)</button>
     </div>
   </header>
   <main>
@@ -64,6 +66,15 @@
       <p>You remembered <span id="learnedCount"></span> of <span id="totalCount"></span> verbs. (Du husket <span id="learnedCount"></span> av <span id="totalCount"></span> verb.)</p>
       <button id="restartButton">Start over (Start på nytt)</button>
     </div>
+
+    <!-- Quiz container, hidden when not in quiz mode -->
+    <div id="quizContainer" class="quiz-container hidden">
+      <p id="quizScoreboard" class="quiz-scoreboard"></p>
+      <div id="quizQuestion" class="quiz-question"></div>
+      <div id="quizOptions" class="quiz-options"></div>
+      <div id="quizFeedback" class="quiz-feedback"></div>
+      <button id="quizExitButton" class="quiz-exit-btn">Exit quiz (Avslutt quiz)</button>
+    </div>
   </main>
   <!-- Toast message for positive feedback -->
   <div id="toast" class="toast hidden">Great job! (Bra jobbet!)</div>
@@ -76,6 +87,7 @@
       <p><strong>English:</strong> In Norwegian, irregular verbs are grouped as <em>weak</em> (svake) or <em>strong</em> (sterke). Weak verbs take an ending in the past tense, often <code>-et</code>, <code>-te</code> or <code>-de</code>. Strong verbs do not take a past‑tense ending and instead change their vowel. These patterns help you predict the verb forms.</p>
       <p><strong>Norsk:</strong> På norsk deles uregelrette verb i <em>svake</em> og <em>sterke</em>. Svake verb får en endelse i preteritum, for eksempel <code>-et</code>, <code>-te</code> eller <code>-de</code>. Sterke verb får ingen endelse, men skifter vokal. Disse mønstrene hjelper deg å forutsi verbformene.</p>
       <p>Some verbs have several alternative forms. Those verbs are classified as hard and will require more practice. You can choose easy, medium or hard mode using the difficulty selector.</p>
+      <button id="modalCloseButton" class="modal-close-btn">Close (Lukk)</button>
     </div>
   </div>
   <script src="script.js"></script>
