@@ -1,45 +1,58 @@
 <!DOCTYPE html>
-<html lang="no">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Uregelrette verb</title>
+  <title>Irregular verbs (Uregelrette verb)</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header>
-    <h1>Uregelrette verb</h1>
-    <!-- Progress indicator will be updated via JavaScript -->
+    <h1>Irregular verbs <span class="small">(Uregelrette verb)</span></h1>
+    <!-- Progress indicator and bar will be updated via JavaScript -->
     <p id="progress" class="progress">0/0</p>
+    <div class="progress-bar-container">
+      <div id="progress-bar" class="progress-bar"></div>
+    </div>
+    <!-- Score indicating how many verbs have been remembered -->
+    <p id="score" class="score">Remembered: 0 (Husket: 0)</p>
   </header>
   <main>
-    <!-- Card displaying the verb and forms -->
-    <div class="card">
-      <h2 id="infinitive" class="verb"></h2>
-      <div id="forms" class="forms hidden">
-        <p><strong>Presens:</strong> <span id="present"></span></p>
-        <p><strong>Preteritum:</strong> <span id="preterite"></span></p>
-        <p><strong>Presens perfektum:</strong> <span id="perfect"></span></p>
-        <p><strong>Engelsk:</strong> <span id="english"></span></p>
-      </div>
-      <div id="hintSection" class="hint hidden">
-        <p><strong>Minne‑triks:</strong> <span id="hint"></span></p>
+    <!-- Flipping card displaying the verb and forms -->
+    <div class="card" id="card">
+      <div class="card-inner" id="cardInner">
+        <div class="card-face card-front">
+          <h2 id="infinitive" class="verb"></h2>
+        </div>
+        <div class="card-face card-back">
+          <div id="forms" class="forms">
+            <p><strong>Present (Presens):</strong> <span id="present"></span></p>
+            <p><strong>Preterite (Preteritum):</strong> <span id="preterite"></span></p>
+            <p><strong>Present perfect (Presens perfektum):</strong> <span id="perfect"></span></p>
+            <p><strong>English (Engelsk):</strong> <span id="english"></span></p>
+          </div>
+          <div id="hintSection" class="hint">
+            <p><strong>Memory tip (Minne‑triks):</strong> <span id="hint"></span></p>
+          </div>
+        </div>
       </div>
     </div>
     <!-- Action buttons -->
     <div class="buttons">
-      <button id="showButton">Vis svar</button>
-      <button id="knowButton">Jeg husket det</button>
-      <button id="skipButton">Hopp over</button>
+      <button id="flipButton">Show answer (Vis svar)</button>
+      <button id="knowButton">I remembered (Jeg husket det)</button>
+      <button id="skipButton">Skip (Hopp over)</button>
     </div>
     <!-- Summary shown when all verbs have been reviewed -->
     <div id="summary" class="summary hidden">
-      <h2>Ferdig!</h2>
-      <p>Du har gått gjennom alle verbene.</p>
-      <p>Du husket <span id="learnedCount"></span> av <span id="totalCount"></span> verb.</p>
-      <button id="restartButton">Start på nytt</button>
+      <h2>Finished! (Ferdig!)</h2>
+      <p>You have gone through all the verbs. (Du har gått gjennom alle verbene.)</p>
+      <p>You remembered <span id="learnedCount"></span> of <span id="totalCount"></span> verbs. (Du husket <span id="learnedCount"></span> av <span id="totalCount"></span> verb.)</p>
+      <button id="restartButton">Start over (Start på nytt)</button>
     </div>
   </main>
+  <!-- Toast message for positive feedback -->
+  <div id="toast" class="toast hidden">Great job! (Bra jobbet!)</div>
   <script src="script.js"></script>
 </body>
 </html>

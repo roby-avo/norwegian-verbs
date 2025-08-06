@@ -695,12 +695,45 @@ const progressEl     = document.getElementById('progress');
 const summaryEl      = document.getElementById('summary');
 const learnedCountEl = document.getElementById('learnedCount');
 const totalCountEl   = document.getElementById('totalCount');
+const scoreEl        = document.getElementById('score');
 
 // Buttons
-const showButton  = document.getElementById('showButton');
+const flipButton  = document.getElementById('flipButton');
 const knowButton  = document.getElementById('knowButton');
 const skipButton  = document.getElementById('skipButton');
 const restartButton = document.getElementById('restartButton');
+
+// Elements for flipping and progress bar
+const cardInner   = document.getElementById('cardInner');
+const progressBarEl = document.getElementById('progress-bar');
+const toastEl        = document.getElementById('toast');
+
+// Encouraging messages shown when a verb is remembered
+const positiveMessages = [
+  'Great job! (Bra jobbet!)',
+  'Well done! (Godt jobba!)',
+  'Keep it up! (Fortsett sånn!)',
+  'Awesome! (Fantastisk!)',
+  'You got it! (Du klarte det!)'
+];
+
+function showToast() {
+  if (!toastEl) return;
+  const msg = positiveMessages[Math.floor(Math.random() * positiveMessages.length)];
+  toastEl.textContent = msg;
+  // Ensure element is visible
+  toastEl.classList.remove('hidden');
+  // Trigger show class for animation
+  toastEl.classList.add('show');
+  // Hide after delay
+  setTimeout(() => {
+    toastEl.classList.remove('show');
+    // Hide again after animation completes
+    setTimeout(() => {
+      toastEl.classList.add('hidden');
+    }, 300);
+  }, 1800);
+}
 
 function shuffle(array) {
   let arr = array.slice();
@@ -737,17 +770,33 @@ function saveProgress() {
 }
 
 function updateProgress() {
+  // Update textual progress and progress bar width
   progressEl.textContent = `${learned.length}/${verbs.length}`;
+  const percent = verbs.length > 0 ? (learned.length / verbs.length) * 100 : 0;
+  if (progressBarEl) {
+    progressBarEl.style.width = `${percent}%`;
+  }
+  if (scoreEl) {
+    // Update score display (remembered count)
+    scoreEl.textContent = `Remembered: ${learned.length} (Husket: ${learned.length})`;
+  }
 }
 
 function showNext() {
   // hide summary if visible
   summaryEl.classList.add('hidden');
+  // Reset card orientation to front
+  cardInner.classList.remove('flipped');
+  // Reset flip button label
+  if (flipButton) {
+    flipButton.textContent = 'Show answer (Vis svar)';
+  }
   if (order.length === 0) {
     // Completed
     learnedCountEl.textContent = learned.length;
     totalCountEl.textContent   = verbs.length;
     summaryEl.classList.remove('hidden');
+    updateProgress();
     return;
   }
   currentIndex = order.pop();
@@ -759,15 +808,15 @@ function showNext() {
   perfectEl.textContent    = v.perfect;
   englishEl.textContent    = v.english;
   hintEl.textContent       = v.hint;
-  // hide answer and hint initially
-  formsContainer.classList.add('hidden');
-  hintSection.classList.add('hidden');
   updateProgress();
 }
 
-function showAnswer() {
-  formsContainer.classList.remove('hidden');
-  hintSection.classList.remove('hidden');
+// Flip the card to reveal the answer. Once flipped, it remains flipped.
+function flipCard() {
+  // Only flip if it is not already flipped
+  if (!cardInner.classList.contains('flipped')) {
+    cardInner.classList.add('flipped');
+  }
 }
 
 function markLearned() {
@@ -775,6 +824,8 @@ function markLearned() {
     learned.push(currentIndex);
     saveProgress();
   }
+  // Show encouraging message
+  showToast();
   showNext();
 }
 
@@ -792,7 +843,7 @@ function restart() {
 }
 
 // Event listeners
-showButton.addEventListener('click', showAnswer);
+flipButton.addEventListener('click', flipCard);
 knowButton.addEventListener('click', markLearned);
 skipButton.addEventListener('click', skipVerb);
 restartButton.addEventListener('click', restart);
