@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Prevent pinch/zoom on mobile to avoid accidental zooming -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Irregular verbs (Uregelrette verb)</title>
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -16,6 +17,19 @@
     </div>
     <!-- Score indicating how many verbs have been remembered -->
     <p id="score" class="score">Remembered: 0 (Husket: 0)</p>
+
+    <!-- Difficulty selection -->
+    <div class="difficulty-selector">
+      <label for="difficultySelect">Difficulty (Vanskelighetsgrad):</label>
+      <select id="difficultySelect">
+        <option value="all">All (Alle)</option>
+        <option value="easy">Easy (Lett)</option>
+        <option value="medium">Medium (Middels)</option>
+        <option value="hard">Hard (Vanskelig)</option>
+      </select>
+      <!-- Info button to open explanation modal -->
+      <button id="infoButton" class="info-btn">Info (Om)</button>
+    </div>
   </header>
   <main>
     <!-- Flipping card displaying the verb and forms -->
@@ -53,6 +67,17 @@
   </main>
   <!-- Toast message for positive feedback -->
   <div id="toast" class="toast hidden">Great job! (Bra jobbet!)</div>
+
+  <!-- Info modal provides general explanations about irregular verbs. Hidden by default. -->
+  <div id="infoModal" class="modal hidden">
+    <div class="modal-content">
+      <span id="closeModal" class="close">&times;</span>
+      <h2>About irregular verbs (Om uregelrette verb)</h2>
+      <p><strong>English:</strong> In Norwegian, irregular verbs are grouped as <em>weak</em> (svake) or <em>strong</em> (sterke). Weak verbs take an ending in the past tense, often <code>-et</code>, <code>-te</code> or <code>-de</code>. Strong verbs do not take a past‑tense ending and instead change their vowel. These patterns help you predict the verb forms.</p>
+      <p><strong>Norsk:</strong> På norsk deles uregelrette verb i <em>svake</em> og <em>sterke</em>. Svake verb får en endelse i preteritum, for eksempel <code>-et</code>, <code>-te</code> eller <code>-de</code>. Sterke verb får ingen endelse, men skifter vokal. Disse mønstrene hjelper deg å forutsi verbformene.</p>
+      <p>Some verbs have several alternative forms. Those verbs are classified as hard and will require more practice. You can choose easy, medium or hard mode using the difficulty selector.</p>
+    </div>
+  </div>
   <script src="script.js"></script>
 </body>
 </html>

@@ -677,10 +677,17 @@ const VERBS = [
 // Irregular verb learning app
 // Data is embedded in VERBS constant.
 
-let verbs = VERBS;
+// Keep the complete list separately
+const allVerbs = VERBS;
+
+// The active list of verbs, filtered by difficulty
+let verbs = allVerbs;
 let order = [];
 let learned = [];
 let currentIndex = null;
+
+// Track current difficulty level ('all', 'easy', 'medium', 'hard')
+let currentDifficulty = 'all';
 
 // DOM elements
 const infinitiveEl = document.getElementById('infinitive');
@@ -708,6 +715,55 @@ const cardInner   = document.getElementById('cardInner');
 const progressBarEl = document.getElementById('progress-bar');
 const toastEl        = document.getElementById('toast');
 
+// Difficulty select element
+const difficultySelect = document.getElementById('difficultySelect');
+
+/**
+ * Determine a difficulty level for a given verb object based on its hint and forms.
+ * - Weak verbs (svakt) are classified as easy.
+ * - Verbs with multiple alternative forms in preterite or perfect (comma or parentheses) are hard.
+ * - Other strong verbs are medium.
+ * @param {Object} v Verb object
+ * @returns {string} 'easy' | 'medium' | 'hard'
+ */
+function assignDifficulty(v) {
+  try {
+    const hint = v.hint || '';
+    const pret = v.preterite || '';
+    const perf = v.perfect || '';
+    if (/svakt/i.test(hint)) return 'easy';
+    if (pret.includes(',') || perf.includes(',') || /\(/.test(pret) || /\(/.test(perf)) return 'hard';
+    // default: strong verbs are medium
+    return 'medium';
+  } catch (e) {
+    return 'medium';
+  }
+}
+
+/**
+ * Translate a Norwegian hint into English using simple replacements.
+ * This is not a perfect translation, but conveys the core message.
+ * @param {string} noHint Norwegian hint
+ * @returns {string} English version of the hint
+ */
+function translateHint(noHint) {
+  if (!noHint) return '';
+  let en = noHint;
+  // Replace phrases
+  en = en.replace(/Dette er et svakt verb\s*–/i, 'This is a weak verb –');
+  en = en.replace(/Dette er et sterkt verb\s*–/i, 'This is a strong verb –');
+  en = en.replace(/preteritum dannes ved å legge til endelse/i, 'the preterite is formed by adding an ending');
+  en = en.replace(/preteritum dannes med vokalskifte/i, 'the preterite is formed with a vowel change');
+  en = en.replace(/Første vokal skifter fra/i, 'The first vowel changes from');
+  en = en.replace(/i infinitiv til/i, 'in the infinitive to');
+  en = en.replace(/i preteritum/i, 'in the preterite');
+  en = en.replace(/Engelsk oversettelse:/i, 'English translation:');
+  en = en.replace(/Norsk\s*'/i, 'The Norwegian ');
+  en = en.replace(/ligner på engelsk/i, 'resembles the English');
+  // Replace Norwegian letters with same letters (no translation needed)
+  return en;
+}
+
 // Encouraging messages shown when a verb is remembered
 const positiveMessages = [
   'Great job! (Bra jobbet!)',
@@ -716,6 +772,29 @@ const positiveMessages = [
   'Awesome! (Fantastisk!)',
   'You got it! (Du klarte det!)'
 ];
+
+// Elements for info modal
+const infoButton   = document.getElementById('infoButton');
+const infoModal    = document.getElementById('infoModal');
+const closeModalEl = document.getElementById('closeModal');
+
+/**
+ * Open the information modal.
+ */
+function openModal() {
+  if (infoModal) {
+    infoModal.classList.remove('hidden');
+  }
+}
+
+/**
+ * Close the information modal.
+ */
+function closeModal() {
+  if (infoModal) {
+    infoModal.classList.add('hidden');
+  }
+}
 
 function showToast() {
   if (!toastEl) return;
@@ -735,6 +814,27 @@ function showToast() {
   }, 1800);
 }
 
+/**
+ * Temporarily disable action buttons to prevent accidental double clicks or zoom events.
+ */
+function disableButtons() {
+  const buttons = [flipButton, knowButton, skipButton];
+  buttons.forEach(btn => {
+    if (btn) {
+      btn.disabled = true;
+      btn.style.opacity = '0.6';
+    }
+  });
+  setTimeout(() => {
+    buttons.forEach(btn => {
+      if (btn) {
+        btn.disabled = false;
+        btn.style.opacity = '';
+      }
+    });
+  }, 400);
+}
+
 function shuffle(array) {
   let arr = array.slice();
   for (let i = arr.length - 1; i > 0; i--) {
@@ -746,15 +846,19 @@ function shuffle(array) {
 
 function loadProgress() {
   try {
-    const savedOrder = JSON.parse(localStorage.getItem('verbOrder'));
-    const savedLearned = JSON.parse(localStorage.getItem('verbLearned'));
+    const orderKey = `verbOrder_${currentDifficulty}`;
+    const learnedKey = `verbLearned_${currentDifficulty}`;
+    const savedOrder = JSON.parse(localStorage.getItem(orderKey));
+    const savedLearned = JSON.parse(localStorage.getItem(learnedKey));
+    // Validate order array
     if (Array.isArray(savedOrder) && savedOrder.every(n => typeof n === 'number')) {
-      order = savedOrder;
+      order = savedOrder.filter(idx => idx < verbs.length);
     } else {
       order = shuffle([...Array(verbs.length).keys()]);
     }
+    // Validate learned array
     if (Array.isArray(savedLearned) && savedLearned.every(n => typeof n === 'number')) {
-      learned = savedLearned;
+      learned = savedLearned.filter(idx => idx < verbs.length);
     } else {
       learned = [];
     }
@@ -765,8 +869,10 @@ function loadProgress() {
 }
 
 function saveProgress() {
-  localStorage.setItem('verbOrder', JSON.stringify(order));
-  localStorage.setItem('verbLearned', JSON.stringify(learned));
+  const orderKey = `verbOrder_${currentDifficulty}`;
+  const learnedKey = `verbLearned_${currentDifficulty}`;
+  localStorage.setItem(orderKey, JSON.stringify(order));
+  localStorage.setItem(learnedKey, JSON.stringify(learned));
 }
 
 function updateProgress() {
@@ -802,12 +908,19 @@ function showNext() {
   currentIndex = order.pop();
   saveProgress();
   const v = verbs[currentIndex];
+  if (!v) {
+    // In case of mismatch, skip
+    showNext();
+    return;
+  }
   infinitiveEl.textContent = v.infinitive;
   presentEl.textContent    = v.present;
   preteriteEl.textContent  = v.preterite;
   perfectEl.textContent    = v.perfect;
   englishEl.textContent    = v.english;
-  hintEl.textContent       = v.hint;
+  // Show both Norwegian hint and translated English hint
+  const englishHint = translateHint(v.hint || '');
+  hintEl.innerHTML = `${v.hint || ''}<br><em>${englishHint}</em>`;
   updateProgress();
 }
 
@@ -834,10 +947,36 @@ function skipVerb() {
 }
 
 function restart() {
-  localStorage.removeItem('verbOrder');
-  localStorage.removeItem('verbLearned');
+  // Clear saved progress for current difficulty
+  localStorage.removeItem(`verbOrder_${currentDifficulty}`);
+  localStorage.removeItem(`verbLearned_${currentDifficulty}`);
   order = shuffle([...Array(verbs.length).keys()]);
   learned = [];
+  saveProgress();
+  showNext();
+}
+
+/**
+ * Filter the verbs list based on selected difficulty and reload progress.
+ * @param {string} level Difficulty: 'all', 'easy', 'medium', 'hard'
+ */
+function filterVerbs(level) {
+  currentDifficulty = level;
+  // Determine filtered verbs based on difficulty
+  if (level === 'all') {
+    verbs = allVerbs;
+  } else {
+    verbs = allVerbs.filter(v => assignDifficulty(v) === level);
+  }
+  // Reset order and learned arrays
+  // Load saved progress for this difficulty if exists
+  loadProgress();
+  // If order array is empty (no saved progress), initialize new order
+  if (!order || order.length === 0) {
+    order = shuffle([...Array(verbs.length).keys()]);
+  }
+  // Ensure learned indices are valid for new verbs list
+  learned = learned.filter(idx => idx < verbs.length);
   saveProgress();
   showNext();
 }
@@ -847,6 +986,36 @@ flipButton.addEventListener('click', flipCard);
 knowButton.addEventListener('click', markLearned);
 skipButton.addEventListener('click', skipVerb);
 restartButton.addEventListener('click', restart);
+
+// Info button opens modal, close button closes
+if (infoButton) {
+  infoButton.addEventListener('click', (ev) => {
+    ev.preventDefault();
+    openModal();
+  });
+}
+if (closeModalEl) {
+  closeModalEl.addEventListener('click', (ev) => {
+    ev.preventDefault();
+    closeModal();
+  });
+}
+// Clicking outside modal content closes it
+if (infoModal) {
+  infoModal.addEventListener('click', (event) => {
+    if (event.target === infoModal) {
+      closeModal();
+    }
+  });
+}
+
+// Handle difficulty selection changes
+if (difficultySelect) {
+  difficultySelect.addEventListener('change', (ev) => {
+    const level = ev.target.value;
+    filterVerbs(level);
+  });
+}
 
 // Initialize on page load
 loadProgress();
