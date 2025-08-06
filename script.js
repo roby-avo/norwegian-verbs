@@ -819,6 +819,10 @@ let quizIndex   = 0;
 let quizCorrect = 0;
 let quizTotal   = 0;
 
+// Delay in milliseconds before automatically advancing to the next quiz question.
+// Increased to give users more time to read the explanation on mobile.
+const QUIZ_FEEDBACK_DELAY = 3500;
+
 // Write mode state variables
 let isWriteMode   = false;
 let writeOrder    = [];
@@ -1151,15 +1155,24 @@ function handleQuizAnswer(btn, selected, correct, v) {
   // Show feedback with both languages
   const englishHint = translateHint(v.hint || '');
   if (quizFeedbackEl) {
-    quizFeedbackEl.innerHTML = `<strong>${v.infinitive}</strong>: ${v.preterite} – ${v.english}<br>${v.hint || ''}<br><em>${englishHint}</em>`;
+    // Display all forms for clarity: present, preterite, perfect and English translation
+    const feedbackHtml = `
+      <strong>${v.infinitive}</strong><br>
+      <span>Present (Presens): ${v.present}</span><br>
+      <span>Preterite (Preteritum): ${v.preterite}</span><br>
+      <span>Perfect (Perfektum): ${v.perfect}</span><br>
+      <span>English: ${v.english}</span><br>
+      ${v.hint || ''}<br><em>${englishHint}</em>
+    `;
+    quizFeedbackEl.innerHTML = feedbackHtml;
     quizFeedbackEl.classList.add('show');
     quizFeedbackEl.style.display = 'block';
   }
-  // Advance to next question after delay
+  // Advance to the next question after a longer delay to allow the user to read the feedback
   setTimeout(() => {
     quizIndex++;
     showQuizQuestion();
-  }, 1800);
+  }, QUIZ_FEEDBACK_DELAY);
 }
 
 /**
@@ -1515,20 +1528,14 @@ restartButton.addEventListener('click', restart);
 
 // Info button opens modal, close button closes
 if (infoButton) {
-  infoButton.addEventListener('click', () => {
-    openModal();
-  });
+  addTapListener(infoButton, openModal);
 }
 if (closeModalEl) {
-  closeModalEl.addEventListener('click', () => {
-    closeModal();
-  });
+  addTapListener(closeModalEl, closeModal);
 }
 // Additional button inside modal to close it
 if (modalCloseButton) {
-  modalCloseButton.addEventListener('click', () => {
-    closeModal();
-  });
+  addTapListener(modalCloseButton, closeModal);
 }
 // Clicking outside modal content closes it
 if (infoModal) {
@@ -1541,14 +1548,10 @@ if (infoModal) {
 
 // Quiz mode event listeners
 if (quizButton) {
-  quizButton.addEventListener('click', () => {
-    startQuiz();
-  });
+  addTapListener(quizButton, startQuiz);
 }
 if (quizExitButton) {
-  quizExitButton.addEventListener('click', () => {
-    exitQuiz();
-  });
+  addTapListener(quizExitButton, exitQuiz);
 }
 
 // Handle difficulty selection changes
@@ -1560,26 +1563,11 @@ if (difficultySelect) {
 }
 
 // Write mode event listeners
-if (writeButton) {
-  writeButton.addEventListener('click', () => {
-    startWrite();
-  });
-}
-if (writeCheckButton) {
-  writeCheckButton.addEventListener('click', () => {
-    handleWriteCheck();
-  });
-}
-if (writeSkipButton) {
-  writeSkipButton.addEventListener('click', () => {
-    handleWriteSkip();
-  });
-}
-if (writeExitButton) {
-  writeExitButton.addEventListener('click', () => {
-    exitWrite();
-  });
-}
+addTapListener(writeButton, startWrite);
+addTapListener(writeCheckButton, handleWriteCheck);
+addTapListener(writeSkipButton, handleWriteSkip);
+addTapListener(writeExitButton, exitWrite);
+
 // Allow pressing Enter in the write input to trigger check
 if (inputPreteriteEl) {
   inputPreteriteEl.addEventListener('keyup', (ev) => {
@@ -1590,23 +1578,28 @@ if (inputPreteriteEl) {
 }
 
 // Memory game event listeners
-if (memoryButton) {
-  memoryButton.addEventListener('click', () => {
-    startMemory();
-  });
-}
-if (memoryRestartButton) {
-  memoryRestartButton.addEventListener('click', () => {
-    restartMemory();
-  });
-}
-if (memoryExitButton) {
-  memoryExitButton.addEventListener('click', () => {
-    exitMemory();
-  });
-}
+addTapListener(memoryButton, startMemory);
+addTapListener(memoryRestartButton, restartMemory);
+addTapListener(memoryExitButton, exitMemory);
 
 // Initialize on page load
 loadProgress();
 showNext();
+
+/**
+ * Helper to attach both click and touchstart events for buttons.
+ * On mobile Safari the click event may be delayed; attaching touchstart
+ * ensures immediate response. The default action is prevented to avoid
+ * triggering synthetic mouse events.
+ * @param {HTMLElement} el The element to attach listeners to
+ * @param {Function} handler The handler to invoke
+ */
+function addTapListener(el, handler) {
+  if (!el || !handler) return;
+  el.addEventListener('click', handler);
+  el.addEventListener('touchstart', (ev) => {
+    ev.preventDefault();
+    handler();
+  }, { passive: false });
+}
 
