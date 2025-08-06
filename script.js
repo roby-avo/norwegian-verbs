@@ -718,6 +718,26 @@ const toastEl        = document.getElementById('toast');
 // Difficulty select element
 const difficultySelect = document.getElementById('difficultySelect');
 
+// Write mode elements
+const writeButton       = document.getElementById('writeButton');
+const writeContainer    = document.getElementById('writeContainer');
+const writeScoreboard   = document.getElementById('writeScoreboard');
+const writeQuestionEl   = document.getElementById('writeQuestion');
+const inputPreteriteEl  = document.getElementById('inputPreterite');
+const writeFeedbackEl   = document.getElementById('writeFeedback');
+const writeCheckButton  = document.getElementById('writeCheckButton');
+const writeSkipButton   = document.getElementById('writeSkipButton');
+const writeExitButton   = document.getElementById('writeExitButton');
+
+// Memory game elements
+const memoryButton        = document.getElementById('memoryButton');
+const memoryContainer     = document.getElementById('memoryContainer');
+const memoryScoreboard    = document.getElementById('memoryScoreboard');
+const memoryBoardEl       = document.getElementById('memoryBoard');
+const memoryFeedbackEl    = document.getElementById('memoryFeedback');
+const memoryRestartButton = document.getElementById('memoryRestartButton');
+const memoryExitButton    = document.getElementById('memoryExitButton');
+
 /**
  * Determine a difficulty level for a given verb object based on its hint and forms.
  * - Weak verbs (svakt) are classified as easy.
@@ -798,6 +818,23 @@ let quizOrder   = [];
 let quizIndex   = 0;
 let quizCorrect = 0;
 let quizTotal   = 0;
+
+// Write mode state variables
+let isWriteMode   = false;
+let writeOrder    = [];
+let writeIndex    = 0;
+let writeCorrect  = 0;
+let writeTotal    = 0;
+
+// Memory game state variables
+let isMemoryMode     = false;
+let memoryCards      = [];
+let memoryFlipped    = [];
+let memoryMatched    = 0;
+let memoryMoves      = 0;
+let memoryPairsTotal = 0;
+let memoryLock       = false;
+let memoryCardsRaw   = [];
 
 /**
  * Open the information modal.
@@ -1162,6 +1199,314 @@ function exitQuiz() {
   showNext();
 }
 
+/**
+ * --- Write mode functionality ---
+ * In write mode the user is given an infinitive and must type the preterite form.
+ * The mode asks a subset of verbs (up to 10) from the full list. Progress and
+ * correctness are tracked, and a scoreboard is displayed. The user can skip,
+ * restart or exit back to study mode.
+ */
+
+function updateWriteScoreboard() {
+  if (!writeScoreboard) return;
+  // Retrieve best correct from storage
+  let bestCorrect = parseInt(localStorage.getItem('writeBestCorrect') || '0', 10);
+  const bestPart  = bestCorrect > 0 ? ` – Best: ${bestCorrect}` : '';
+  writeScoreboard.textContent = `Write: ${writeIndex}/${writeTotal} – Correct: ${writeCorrect}${bestPart} (Riktig: ${writeCorrect})`;
+}
+
+function showWriteQuestion() {
+  updateWriteScoreboard();
+  // End of list
+  if (writeIndex >= writeOrder.length) {
+    endWrite();
+    return;
+  }
+  const idx = writeOrder[writeIndex];
+  const v   = allVerbs[idx];
+  if (!v) {
+    // Skip invalid entries
+    writeIndex++;
+    showWriteQuestion();
+    return;
+  }
+  if (writeQuestionEl) {
+    writeQuestionEl.textContent = v.infinitive;
+  }
+  // Clear input and feedback
+  if (inputPreteriteEl) {
+    inputPreteriteEl.value = '';
+    inputPreteriteEl.focus();
+  }
+  if (writeFeedbackEl) {
+    writeFeedbackEl.classList.remove('show');
+    writeFeedbackEl.style.display = 'none';
+    writeFeedbackEl.innerHTML = '';
+  }
+}
+
+function handleWriteCheck() {
+  if (writeIndex >= writeOrder.length) {
+    return;
+  }
+  const idx      = writeOrder[writeIndex];
+  const v        = allVerbs[idx];
+  const userAns  = (inputPreteriteEl.value || '').trim().toLowerCase();
+  const answers  = (v.preterite || '').split(/[,()]/).map(s => s.trim().toLowerCase()).filter(s => s.length > 0);
+  const correct  = answers.includes(userAns);
+  // Show feedback
+  if (writeFeedbackEl) {
+    const englishHint = translateHint(v.hint || '');
+    if (correct) {
+      writeCorrect++;
+      // Use toast for positive reinforcement
+      showToast();
+      writeFeedbackEl.innerHTML = `<strong>Correct!</strong> ${v.infinitive} – ${v.preterite} – ${v.english}<br>${v.hint || ''}<br><em>${englishHint}</em>`;
+      writeFeedbackEl.classList.add('show');
+      writeFeedbackEl.style.display = 'block';
+    } else {
+      writeFeedbackEl.innerHTML = `<strong>Wrong.</strong> Correct forms: ${v.preterite} – ${v.english}<br>${v.hint || ''}<br><em>${englishHint}</em>`;
+      writeFeedbackEl.classList.add('show');
+      writeFeedbackEl.style.display = 'block';
+    }
+  }
+  updateWriteScoreboard();
+  // Move to next question after a delay to allow user to read feedback
+  setTimeout(() => {
+    writeIndex++;
+    showWriteQuestion();
+  }, 1800);
+}
+
+function handleWriteSkip() {
+  if (writeIndex < writeOrder.length) {
+    writeIndex++;
+    showWriteQuestion();
+  }
+}
+
+function endWrite() {
+  // Display completion message
+  if (writeQuestionEl) {
+    writeQuestionEl.textContent = 'Finished! (Ferdig!)';
+  }
+  if (writeFeedbackEl) {
+    writeFeedbackEl.innerHTML = `You answered ${writeCorrect} of ${writeTotal} correctly. (Du svarte riktig på ${writeCorrect} av ${writeTotal}.)`;
+    writeFeedbackEl.classList.add('show');
+    writeFeedbackEl.style.display = 'block';
+  }
+  // Update best score in localStorage
+  let bestCorrect = parseInt(localStorage.getItem('writeBestCorrect') || '0', 10);
+  if (writeCorrect > bestCorrect) {
+    localStorage.setItem('writeBestCorrect', String(writeCorrect));
+  }
+  updateWriteScoreboard();
+}
+
+function startWrite() {
+  isWriteMode = true;
+  // Hide study and quiz UI
+  if (cardEl) cardEl.style.display = 'none';
+  if (buttonsContainer) buttonsContainer.style.display = 'none';
+  if (quizContainer) quizContainer.classList.add('hidden');
+  summaryEl.classList.add('hidden');
+  // Show write container
+  if (writeContainer) writeContainer.classList.remove('hidden');
+  // Initialize order: use up to 10 verbs or full list if shorter
+  writeTotal   = Math.min(10, allVerbs.length);
+  writeOrder   = shuffle([...Array(allVerbs.length).keys()]).slice(0, writeTotal);
+  writeIndex   = 0;
+  writeCorrect = 0;
+  showWriteQuestion();
+}
+
+function exitWrite() {
+  isWriteMode = false;
+  // Hide write container
+  if (writeContainer) writeContainer.classList.add('hidden');
+  // Restore study mode UI
+  if (cardEl) cardEl.style.display = '';
+  if (buttonsContainer) buttonsContainer.style.display = 'flex';
+  // Reset and clear feedback
+  if (writeFeedbackEl) {
+    writeFeedbackEl.classList.remove('show');
+    writeFeedbackEl.style.display = 'none';
+    writeFeedbackEl.innerHTML = '';
+  }
+  // Show next verb in study mode
+  showNext();
+}
+
+/**
+ * --- Memory game functionality ---
+ * A simple concentration/memory game where the user matches infinitives to
+ * their preterite forms. A subset of verbs is selected randomly. Cards
+ * are flipped by clicking, and matching pairs remain exposed. Moves and
+ * pairs found are tracked. A best score (minimum moves) is stored in
+ * localStorage under 'memoryBestMoves'.
+ */
+
+function updateMemoryScoreboard() {
+  if (!memoryScoreboard) return;
+  // Retrieve best moves from storage if exists
+  let bestMoves = parseInt(localStorage.getItem('memoryBestMoves') || '0', 10);
+  const bestPart = bestMoves > 0 ? ` – Best: ${bestMoves}` : '';
+  memoryScoreboard.textContent = `Memory: ${memoryMatched}/${memoryPairsTotal} – Moves: ${memoryMoves}${bestPart}`;
+}
+
+function generateMemoryCards(pairCount) {
+  const indices = shuffle([...Array(allVerbs.length).keys()]).slice(0, pairCount);
+  const list = [];
+  indices.forEach((idx, pid) => {
+    const v = allVerbs[idx];
+    const pre = (v.preterite || '').split(/[,()]/)[0].trim();
+    list.push({ pair: pid, text: v.infinitive });
+    list.push({ pair: pid, text: pre });
+  });
+  return shuffle(list);
+}
+
+function createMemoryBoard() {
+  if (!memoryBoardEl) return;
+  memoryBoardEl.innerHTML = '';
+  memoryCards   = [];
+  memoryFlipped = [];
+  memoryMatched = 0;
+  memoryMoves   = 0;
+  memoryPairsTotal = memoryCardsRaw.length / 2;
+  // Create DOM elements for each card
+  memoryCardsRaw.forEach((cardObj, index) => {
+    const cardEl = document.createElement('div');
+    cardEl.className = 'memory-card';
+    cardEl.dataset.pair = cardObj.pair;
+    cardEl.dataset.text = cardObj.text;
+    cardEl.textContent = '';
+    cardEl.addEventListener('click', () => handleMemoryCardClick(cardEl));
+    memoryCards.push({ element: cardEl, pair: cardObj.pair, text: cardObj.text, matched: false, flipped: false });
+    memoryBoardEl.appendChild(cardEl);
+  });
+  updateMemoryScoreboard();
+}
+
+function handleMemoryCardClick(cardEl) {
+  if (memoryLock) return;
+  // Find card object
+  const cardObj = memoryCards.find(c => c.element === cardEl);
+  if (!cardObj || cardObj.matched || cardObj.flipped) return;
+  // Flip the card
+  cardObj.flipped = true;
+  cardEl.classList.add('flipped');
+  cardEl.textContent = cardObj.text;
+  memoryFlipped.push(cardObj);
+  if (memoryFlipped.length === 2) {
+    // Two cards flipped; increment moves
+    memoryMoves++;
+    const [c1, c2] = memoryFlipped;
+    if (c1.pair === c2.pair) {
+      // Match found
+      c1.matched = true;
+      c2.matched = true;
+      c1.element.classList.remove('flipped');
+      c1.element.classList.add('matched');
+      c2.element.classList.remove('flipped');
+      c2.element.classList.add('matched');
+      memoryMatched++;
+      // Optional feedback
+      if (memoryFeedbackEl) {
+        memoryFeedbackEl.textContent = `Match: ${c1.text} – ${c2.text}`;
+        memoryFeedbackEl.classList.add('show');
+        memoryFeedbackEl.style.display = 'block';
+      }
+      memoryFlipped = [];
+      updateMemoryScoreboard();
+      // Check if game finished
+      if (memoryMatched === memoryPairsTotal) {
+        endMemoryGame();
+      }
+    } else {
+      // No match: hide after delay
+      memoryLock = true;
+      updateMemoryScoreboard();
+      setTimeout(() => {
+        memoryFlipped.forEach(obj => {
+          obj.flipped = false;
+          obj.element.classList.remove('flipped');
+          obj.element.textContent = '';
+        });
+        memoryFlipped = [];
+        memoryLock = false;
+      }, 700);
+    }
+  } else {
+    updateMemoryScoreboard();
+  }
+}
+
+function endMemoryGame() {
+  // Stop further interaction
+  memoryLock = true;
+  // Show final feedback
+  if (memoryFeedbackEl) {
+    memoryFeedbackEl.textContent = `Finished! (Ferdig!) You found all pairs in ${memoryMoves} moves.`;
+    memoryFeedbackEl.classList.add('show');
+    memoryFeedbackEl.style.display = 'block';
+  }
+  // Update best moves in storage
+  let bestMoves = parseInt(localStorage.getItem('memoryBestMoves') || '0', 10);
+  if (bestMoves === 0 || memoryMoves < bestMoves) {
+    localStorage.setItem('memoryBestMoves', String(memoryMoves));
+  }
+  updateMemoryScoreboard();
+}
+
+function startMemory() {
+  isMemoryMode = true;
+  // Hide study and quiz UI
+  if (cardEl) cardEl.style.display = 'none';
+  if (buttonsContainer) buttonsContainer.style.display = 'none';
+  if (quizContainer) quizContainer.classList.add('hidden');
+  summaryEl.classList.add('hidden');
+  // Show memory container
+  if (memoryContainer) memoryContainer.classList.remove('hidden');
+  // Generate new game: choose 6 pairs or half of verbs if fewer
+  const pairs = Math.min(6, Math.floor(allVerbs.length / 2));
+  memoryCardsRaw = generateMemoryCards(pairs);
+  memoryPairsTotal = pairs;
+  memoryFlipped = [];
+  memoryMatched = 0;
+  memoryMoves   = 0;
+  memoryLock    = false;
+  // Create board
+  createMemoryBoard();
+  // Clear feedback
+  if (memoryFeedbackEl) {
+    memoryFeedbackEl.classList.remove('show');
+    memoryFeedbackEl.style.display = 'none';
+    memoryFeedbackEl.textContent = '';
+  }
+}
+
+function restartMemory() {
+  startMemory();
+}
+
+function exitMemory() {
+  isMemoryMode = false;
+  // Hide memory container
+  if (memoryContainer) memoryContainer.classList.add('hidden');
+  // Reset feedback
+  if (memoryFeedbackEl) {
+    memoryFeedbackEl.classList.remove('show');
+    memoryFeedbackEl.style.display = 'none';
+    memoryFeedbackEl.textContent = '';
+  }
+  // Show study UI again
+  if (cardEl) cardEl.style.display = '';
+  if (buttonsContainer) buttonsContainer.style.display = 'flex';
+  // Continue normal study
+  showNext();
+}
+
 // Event listeners
 flipButton.addEventListener('click', flipCard);
 knowButton.addEventListener('click', markLearned);
@@ -1211,6 +1556,53 @@ if (difficultySelect) {
   difficultySelect.addEventListener('change', (ev) => {
     const level = ev.target.value;
     filterVerbs(level);
+  });
+}
+
+// Write mode event listeners
+if (writeButton) {
+  writeButton.addEventListener('click', () => {
+    startWrite();
+  });
+}
+if (writeCheckButton) {
+  writeCheckButton.addEventListener('click', () => {
+    handleWriteCheck();
+  });
+}
+if (writeSkipButton) {
+  writeSkipButton.addEventListener('click', () => {
+    handleWriteSkip();
+  });
+}
+if (writeExitButton) {
+  writeExitButton.addEventListener('click', () => {
+    exitWrite();
+  });
+}
+// Allow pressing Enter in the write input to trigger check
+if (inputPreteriteEl) {
+  inputPreteriteEl.addEventListener('keyup', (ev) => {
+    if (ev.key === 'Enter') {
+      handleWriteCheck();
+    }
+  });
+}
+
+// Memory game event listeners
+if (memoryButton) {
+  memoryButton.addEventListener('click', () => {
+    startMemory();
+  });
+}
+if (memoryRestartButton) {
+  memoryRestartButton.addEventListener('click', () => {
+    restartMemory();
+  });
+}
+if (memoryExitButton) {
+  memoryExitButton.addEventListener('click', () => {
+    exitMemory();
   });
 }
 

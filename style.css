@@ -449,6 +449,16 @@ main {
   display: none !important;
 }
 
+/* Hide write container when hidden class is applied */
+.write-container.hidden {
+  display: none !important;
+}
+
+/* Hide memory container when hidden class is applied */
+.memory-container.hidden {
+  display: none !important;
+}
+
 /* Quiz button styling */
 .quiz-btn {
   background-color: #ff6f61;
@@ -462,6 +472,246 @@ main {
 }
 .quiz-btn:hover {
   background-color: #e65f52;
+}
+
+/* Write mode button styling */
+.write-btn {
+  background-color: #ffa726;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.write-btn:hover {
+  background-color: #e69521;
+}
+
+/* Memory game button styling */
+.memory-btn {
+  background-color: #ab47bc;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.memory-btn:hover {
+  background-color: #9433a1;
+}
+
+/* Write mode container */
+.write-container {
+  width: 100%;
+  max-width: 480px;
+  margin: 1rem auto;
+  padding: 1rem;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+}
+.write-scoreboard {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.8rem;
+  text-align: center;
+}
+.write-question {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.8rem;
+  text-align: center;
+  color: #2c3e50;
+}
+.write-inputs {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.8rem;
+}
+.write-inputs label {
+  font-size: 0.9rem;
+  color: #2c3e50;
+}
+.write-inputs input {
+  width: 100%;
+  padding: 0.6rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+.write-feedback {
+  font-size: 0.95rem;
+  margin-bottom: 0.8rem;
+  width: 100%;
+  background-color: #f7faff;
+  border-left: 4px solid #4b8af7;
+  padding: 0.5rem;
+  border-radius: 4px;
+  display: none;
+}
+.write-feedback.show {
+  display: block;
+}
+.write-buttons {
+  width: 100%;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+}
+.write-check-btn {
+  flex: 1;
+  padding: 0.6rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  background-color: #4b8af7;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.write-check-btn:hover {
+  background-color: #3a78d6;
+}
+.write-skip-btn {
+  flex: 1;
+  padding: 0.6rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  background-color: #ffc107;
+  color: #333;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.write-skip-btn:hover {
+  background-color: #e0a800;
+}
+.write-exit-btn {
+  margin-top: 0.6rem;
+  padding: 0.6rem 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  background-color: #4b8af7;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.write-exit-btn:hover {
+  background-color: #3a78d6;
+}
+
+/* Memory game container */
+.memory-container {
+  width: 100%;
+  max-width: 480px;
+  margin: 1rem auto;
+  padding: 1rem;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+}
+.memory-scoreboard {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.8rem;
+  text-align: center;
+}
+.memory-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  width: 100%;
+  margin-bottom: 0.8rem;
+}
+
+/* On very narrow screens, reduce to two columns for better readability */
+@media (max-width: 360px) {
+  .memory-board {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+.memory-card {
+  position: relative;
+  background-color: #f0f5ff;
+  color: #2c3e50;
+  border-radius: 6px;
+  padding: 0.8rem;
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+.memory-card.flipped {
+  background-color: #4b8af7;
+  color: #ffffff;
+}
+.memory-card.matched {
+  background-color: #28a745;
+  color: #ffffff;
+  cursor: default;
+}
+.memory-feedback {
+  font-size: 0.95rem;
+  margin-bottom: 0.8rem;
+  text-align: center;
+  width: 100%;
+  background-color: #f7faff;
+  border-left: 4px solid #4b8af7;
+  padding: 0.5rem;
+  border-radius: 4px;
+  display: none;
+}
+.memory-feedback.show {
+  display: block;
+}
+.memory-buttons {
+  width: 100%;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: space-between;
+}
+.memory-restart-btn,
+.memory-exit-btn {
+  flex: 1;
+  padding: 0.6rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  background-color: #4b8af7;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.memory-restart-btn:hover,
+.memory-exit-btn:hover {
+  background-color: #3a78d6;
 }
 
 /* Button inside modal to close */

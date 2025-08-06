@@ -18,7 +18,7 @@
     <!-- Score indicating how many verbs have been remembered -->
     <p id="score" class="score">Remembered: 0 (Husket: 0)</p>
 
-    <!-- Difficulty selection -->
+    <!-- Difficulty selection and mode controls -->
     <div class="difficulty-selector">
       <label for="difficultySelect">Difficulty (Vanskelighetsgrad):</label>
       <select id="difficultySelect">
@@ -27,10 +27,14 @@
         <option value="medium">Medium (Middels)</option>
         <option value="hard">Hard (Vanskelig)</option>
       </select>
-      <!-- Info button to open explanation modal -->
+      <!-- Info button opens a modal with explanations -->
       <button id="infoButton" class="info-btn">Info (Om)</button>
       <!-- Quiz mode button -->
       <button id="quizButton" class="quiz-btn">Quiz (Quiz‑modus)</button>
+      <!-- Write mode button -->
+      <button id="writeButton" class="write-btn">Write forms (Skriv)</button>
+      <!-- Memory game button -->
+      <button id="memoryButton" class="memory-btn">Memory (Hukommelse)</button>
     </div>
   </header>
   <main>
@@ -74,6 +78,33 @@
       <div id="quizOptions" class="quiz-options"></div>
       <div id="quizFeedback" class="quiz-feedback"></div>
       <button id="quizExitButton" class="quiz-exit-btn">Exit quiz (Avslutt quiz)</button>
+    </div>
+
+    <!-- Write mode container, hidden by default -->
+    <div id="writeContainer" class="write-container hidden">
+      <p id="writeScoreboard" class="write-scoreboard"></p>
+      <div id="writeQuestion" class="write-question"></div>
+      <div id="writeInputs" class="write-inputs">
+        <label for="inputPreterite">Preterite (Preteritum):</label>
+        <input id="inputPreterite" type="text" autocomplete="off" />
+      </div>
+      <div id="writeFeedback" class="write-feedback"></div>
+      <div class="write-buttons">
+        <button id="writeCheckButton" class="write-check-btn">Check (Sjekk)</button>
+        <button id="writeSkipButton" class="write-skip-btn">Skip (Hopp over)</button>
+      </div>
+      <button id="writeExitButton" class="write-exit-btn">Exit (Avslutt)</button>
+    </div>
+
+    <!-- Memory game container, hidden by default -->
+    <div id="memoryContainer" class="memory-container hidden">
+      <p id="memoryScoreboard" class="memory-scoreboard"></p>
+      <div id="memoryBoard" class="memory-board"></div>
+      <div id="memoryFeedback" class="memory-feedback"></div>
+      <div class="memory-buttons">
+        <button id="memoryRestartButton" class="memory-restart-btn">Restart (Start på nytt)</button>
+        <button id="memoryExitButton" class="memory-exit-btn">Exit (Avslutt)</button>
+      </div>
     </div>
   </main>
   <!-- Toast message for positive feedback -->
